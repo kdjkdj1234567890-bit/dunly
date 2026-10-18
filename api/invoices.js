@@ -29,7 +29,8 @@ module.exports = async (req, res) => {
   try {
     if (req.method === 'GET') {
       const j = await pp('GET', '/v2/invoicing/invoices?page=1&page_size=40&total_required=true');
-      const items = (j.items || []).map(shape).filter(i => i.demo && i.status !== 'DRAFT').sort((a, b) => (b.invoice_date || '').localeCompare(a.invoice_date || '') || b.number.localeCompare(a.number));
+      const items = (j.items || []).map(shape).filter(i => i.demo && i.status !== 'DRAFT')
+        .sort((a, b) => (b.days_overdue > 0) - (a.days_overdue > 0) || b.days_overdue - a.days_overdue || (b.invoice_date || '').localeCompare(a.invoice_date || '') || b.number.localeCompare(a.number));
       return send(res, 200, { invoices: items, total: j.total_items || 0 });
     }
     if (req.method !== 'POST') return send(res, 405, { error: 'GET or POST only' });

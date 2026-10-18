@@ -22,7 +22,7 @@ function check(text, subject, inv) {
 }
 function fallback(inv, tone) {
   const first = inv.client.split(' ')[0];
-  const lead = tone === 'firm' ? `Invoice ${inv.number} is now ${inv.days_overdue} day${inv.days_overdue === 1 ? '' : 's'} past due.` : `A quick reminder about invoice ${inv.number}.`;
+  const lead = inv.days_overdue && tone === 'firm' ? `Invoice ${inv.number} is now ${inv.days_overdue} day${inv.days_overdue === 1 ? '' : 's'} past due.` : inv.days_overdue ? `A quick reminder about invoice ${inv.number}.` : `A quick reminder that invoice ${inv.number} is coming up for payment.`;
   return { subject: `Invoice ${inv.number}: ${inv.days_overdue ? 'past due' : 'reminder'}`, note: `Hi ${first}, ${lead} The amount due is ${inv.due_amount} ${inv.currency}${inv.due_date ? ' (due ' + inv.due_date + ')' : ''}. You can pay from the invoice page. Thank you. [Dunly sandbox demo]` };
 }
 
@@ -50,7 +50,7 @@ Use ONLY the facts provided. The only money amount you may write is amount_due w
         if (!problems.length) break;
       }
       let used = 'ai';
-      if (problems.length) { out = fallback(inv, tone); used = 'template'; }
+      if (problems.length) { console.log('draft rejected:', problems.join('; ')); out = fallback(inv, tone); used = 'template'; }
       out.note = out.note.replace(/\s*\[Dunly sandbox demo\]\s*$/, '') + ' [Dunly sandbox demo]';
       return send(res, 200, { ...out, tone, source: used, checked: { only_amount_due: true, amount_due: inv.due_amount, currency: inv.currency } });
     }
