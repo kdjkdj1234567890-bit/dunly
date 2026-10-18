@@ -26,7 +26,7 @@
   <section id="create" class="panel on">
     <div class="hero">
       <h1>Paste what the client said.<br>Get an invoice you can trust.</h1>
-      <p>The AI reads the message and drafts the lines. Then every price is checked against your source text before PayPal ever sees it.</p>
+      <p>The AI reads the message and drafts the lines. Before PayPal sees anything, the server checks every price against your source text.</p>
     </div>
     <div class="grid2">
       <div class="card">
@@ -86,6 +86,7 @@
         </div>
         <div id="chaseMsg" class="msg"></div>
         <hr>
+        <div class="muted small" id="ownNote"></div>
         <div class="row"><button id="markPaid" class="ghost">Record as paid</button><button id="cancelInv" class="ghost danger">Cancel invoice</button></div>
       </div>
     </div>
@@ -97,9 +98,9 @@
       <div class="card"><h3>1. AI reads, humans approve</h3><p>The model turns messy text into lines. Nothing is sent until you review the draft. Missing details become questions, not guesses.</p></div>
       <div class="card"><h3>2. Prices are checked against your text</h3><p>Each price must appear in what the client wrote. If it does not, the line is flagged and the send button stays locked until you confirm it.</p></div>
       <div class="card"><h3>3. Reminders cannot invent amounts</h3><p>For collections, the invoice is re-read from PayPal. The only figure a reminder may contain is the amount due. Any other figure blocks the send, on the server.</p></div>
-      <div class="card"><h3>4. Pasted text is data</h3><p>Instructions hidden inside a client message are ignored. Try the third sample to see it.</p></div>
+      <div class="card"><h3>4. Pasted text is data</h3><p>The model is told to treat pasted text as data, and the server enforces amounts either way, so a hidden instruction cannot change a price. Try the third sample.</p></div>
       <div class="card"><h3>What runs where</h3><p>PayPal Invoicing API: create, send, list, remind, record payment, cancel. Gemini 2.5 Flash: draft and tone. Static page and serverless functions on Vercel. Source is open under MIT.</p></div>
-      <div class="card"><h3>Limits of this demo</h3><p>Sandbox only. Rate limited. One currency per invoice. No tax or discounts yet. Not financial or legal advice.</p></div>
+      <div class="card"><h3>Limits of this demo</h3><p>Sandbox only. Shared demo: sample invoices are read-only and the rate limit is per server instance. One currency per invoice. No tax or discounts yet. Not financial or legal advice.</p></div>
     </div>
   </section>
 </main>

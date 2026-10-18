@@ -33,7 +33,8 @@ module.exports = async (req, res) => {
     const id = String(b.id || '');
     if (!/^INV2-[A-Z0-9-]+$/.test(id)) return send(res, 400, { error: 'Bad invoice id.' });
     // The invoice is always re-read from PayPal. Amounts never come from the browser or the model.
-    const inv = shape(await pp('GET', `/v2/invoicing/invoices/${id}`));
+    const sid = String(b.sid || '').replace(/[^a-z0-9]/g, '').slice(0, 24);
+    const inv = shape(await pp('GET', `/v2/invoicing/invoices/${id}`), sid);
     if (!inv.demo) return send(res, 403, { error: 'Only invoices created by this demo can be managed here.' });
     const act = b.action;
     if (act === 'draft') {
@@ -63,6 +64,7 @@ Use ONLY the facts provided. The only money amount you may write is amount_due w
       await pp('POST', `/v2/invoicing/invoices/${id}/remind`, { subject, note, send_to_invoicer: false });
       return send(res, 200, { ok: true });
     }
+    if ((act === 'paid' || act === 'cancel') && !inv.mine) return send(res, 403, { error: 'Sample and other visitors\' invoices are read-only. Create your own invoice to try this.' });
     if (act === 'paid') {
       if (!inv.open) return send(res, 409, { error: 'This invoice is ' + inv.status.toLowerCase() + '.' });
       await pp('POST', `/v2/invoicing/invoices/${id}/payments`, { method: 'BANK_TRANSFER', payment_date: new Date().toISOString().slice(0, 10), amount: { currency_code: inv.currency, value: inv.due_amount }, note: 'Recorded in Dunly demo' });

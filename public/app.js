@@ -1,6 +1,8 @@
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (v, c) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: c || 'USD' }).format(v); } catch (e) { return v + ' ' + c; } };
+const SID = (() => { let s = localStorage.getItem('dunly_sid'); if (!s) { s = [...crypto.getRandomValues(new Uint8Array(8))].map(x => (x % 36).toString(36)).join('') + Date.now().toString(36); localStorage.setItem('dunly_sid', s); } return s; })();
+let lastSource = '';
 async function api(path, body) {
   const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
   const j = await r.json().catch(() => ({ error: 'Unexpected server response' }));
@@ -58,7 +60,7 @@ $('#addLine').onclick = () => { $('#lines tbody').append(lineRow({ name: '', des
 $('#draftBtn').onclick = async () => {
   const b = $('#draftBtn'); b.disabled = true; say($('#draftMsg'), 'Reading the message...');
   try {
-    const d = await api('/api/draft', { source: $('#src').value });
+    lastSource = $('#src').value; const d = await api('/api/draft', { source: lastSource });
     $('#review').hidden = false; $('#ph').hidden = true; $('#done').hidden = true; say($('#sendMsg'), '');
     $('#cName').value = d.client_name || ''; $('#cEmail').value = d.client_email || '';
     $('#cur').value = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(d.currency) ? d.currency : 'USD';
@@ -77,7 +79,7 @@ $('#sendBtn').onclick = async () => {
   if ($('#gate').hidden === false && !$('#ack').checked) return say($('#sendMsg'), 'Please confirm the highlighted prices first.', 'err');
   const b = $('#sendBtn'); b.disabled = true; say($('#sendMsg'), 'Creating the invoice on PayPal...');
   try {
-    const r = await api('/api/invoices', { client_name: $('#cName').value, client_email: $('#cEmail').value, currency: $('#cur').value, payment_terms_days: +$('#terms').value, items });
+    const r = await api('/api/invoices', { sid: SID, source: lastSource, confirm_unverified: $('#gate').hidden ? false : $('#ack').checked, client_name: $('#cName').value, client_email: $('#cEmail').value, currency: $('#cur').value, payment_terms_days: +$('#terms').value, items });
     say($('#sendMsg'), '');
     const i = r.invoice;
     $('#done').hidden = false;
@@ -92,7 +94,7 @@ let invoices = [], cur = null, tone = 'neutral';
 const pill = i => i.status === 'PAID' || i.status === 'MARKED_AS_PAID' ? '<span class="pill paid">Paid</span>' : i.status === 'CANCELLED' ? '<span class="pill off">Cancelled</span>' : i.days_overdue ? `<span class="pill late">${i.days_overdue}d overdue</span>` : i.open ? '<span class="pill open">Open</span>' : `<span class="pill off">${esc(i.status.toLowerCase())}</span>`;
 async function loadList() {
   try {
-    const j = await api('/api/invoices'); invoices = j.invoices;
+    const j = await api('/api/invoices?sid=' + SID); invoices = j.invoices;
     $('#list').innerHTML = invoices.length ? '' : '<div class="muted">No invoices yet. Create one first.</div>';
     invoices.forEach(i => {
       const b = document.createElement('button'); b.className = 'inv' + (cur && cur.id === i.id ? ' on' : '');
@@ -107,7 +109,8 @@ function pick(i, keep) {
   $('#chase').hidden = false; if (!keep) { $('#remBox').hidden = true; say($('#chaseMsg'), ''); }
   $('#chaseTitle').textContent = `Invoice #${i.number} - ${i.client}`;
   $('#chaseFacts').innerHTML = `<div><span>Amount due</span><br><b>${esc(money(i.due_amount, i.currency))}</b></div><div><span>Status</span><br><b>${esc(i.status)}</b></div><div><span>Due date</span><br><b>${esc(i.due_date || 'none')}</b></div><div><span>Overdue</span><br><b>${i.days_overdue ? i.days_overdue + ' days' : 'no'}</b></div>`;
-  $('#draftRem').disabled = $('#markPaid').disabled = $('#cancelInv').disabled = !i.open;
+  $('#draftRem').disabled = !i.open; $('#markPaid').disabled = $('#cancelInv').disabled = !(i.open && i.mine);
+  $('#ownNote').textContent = i.open && !i.mine ? 'Sample or other visitors\' invoice: you can chase it, but only your own invoices can be marked paid or cancelled.' : '';
   [...$('#list').children].forEach((el, k) => el.classList.toggle('on', invoices[k] && invoices[k].id === i.id));
 }
 $('#refresh').onclick = loadList;
@@ -115,7 +118,7 @@ $$('#tone button').forEach(b => b.onclick = () => { tone = b.dataset.t; $$('#ton
 $('#draftRem').onclick = async () => {
   const b = $('#draftRem'); b.disabled = true; say($('#chaseMsg'), 'Writing...');
   try {
-    const r = await api('/api/collect', { action: 'draft', id: cur.id, tone });
+    const r = await api('/api/collect', { action: 'draft', id: cur.id, tone, sid: SID });
     $('#remBox').hidden = false; $('#remSub').value = r.subject; $('#remNote').value = r.note;
     $('#remCheck').textContent = (r.source === 'template' ? 'The AI draft was rejected by the amount check, so a plain template is shown. ' : '') + `Checked: the only amount in this note is ${money(r.checked.amount_due, r.checked.currency)}, read from PayPal.`;
     say($('#chaseMsg'), '');
@@ -124,13 +127,13 @@ $('#draftRem').onclick = async () => {
 };
 $('#remSend').onclick = async () => {
   const b = $('#remSend'); b.disabled = true; say($('#chaseMsg'), 'Sending through PayPal...');
-  try { await api('/api/collect', { action: 'send', id: cur.id, subject: $('#remSub').value, note: $('#remNote').value }); say($('#chaseMsg'), 'Reminder sent through PayPal.', 'ok'); }
+  try { await api('/api/collect', { sid: SID, action: 'send', id: cur.id, subject: $('#remSub').value, note: $('#remNote').value }); say($('#chaseMsg'), 'Reminder sent through PayPal.', 'ok'); }
   catch (e) { say($('#chaseMsg'), e.message, 'err'); }
   b.disabled = false;
 };
 async function act(action, okMsg) {
   say($('#chaseMsg'), 'Working...');
-  try { await api('/api/collect', { action, id: cur.id }); say($('#chaseMsg'), okMsg, 'ok'); $('#remBox').hidden = true; await loadList(); }
+  try { await api('/api/collect', { action, id: cur.id, sid: SID }); say($('#chaseMsg'), okMsg, 'ok'); $('#remBox').hidden = true; await loadList(); }
   catch (e) { say($('#chaseMsg'), e.message, 'err'); }
 }
 $('#markPaid').onclick = () => confirm('Record this invoice as paid (bank transfer)?') && act('paid', 'Recorded as paid.');
