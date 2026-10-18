@@ -1,0 +1,9 @@
+{
+  "name": "dunly",
+  "version": "1.0.0",
+  "description": "AI invoicing and gentle collections on the PayPal Invoicing API (sandbox demo)",
+  "license": "MIT",
+  "private": false,
+  "engines": { "node": ">=18" },
+  "scripts": { "start": "node dev-server.js", "seed": "node tools/seed.js" }
+}

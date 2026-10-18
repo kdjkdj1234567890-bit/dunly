@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dunly - AI invoicing and gentle collections on PayPal</title>
+<meta name="description" content="Turn a client message into a PayPal invoice, then chase late payers politely. The AI writes the words. PayPal holds the numbers.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23143d33'/><path d='M9 21l5-10 4 7 5-9' stroke='%23f2c14e' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <div class="brand"><span class="mark"></span><b>Dunly</b><span class="tag">sandbox demo</span></div>
+    <nav id="tabs">
+      <button data-tab="create" class="on">New invoice</button>
+      <button data-tab="collect">Collections</button>
+      <button data-tab="how">How it stays honest</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="banner">Runs on the PayPal <b>sandbox</b>. Invoices are real API objects, but no real money moves and no real email is sent. Sample clients are fake.</div>
+
+  <section id="create" class="panel on">
+    <div class="hero">
+      <h1>Paste what the client said.<br>Get an invoice you can trust.</h1>
+      <p>The AI reads the message and drafts the lines. Then every price is checked against your source text before PayPal ever sees it.</p>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <label for="src">Client message or work notes</label>
+        <textarea id="src" rows="11" placeholder="Paste an email, chat, or your own notes..."></textarea>
+        <div class="row">
+          <span class="muted small">Try a sample:</span>
+          <button class="chip" data-sample="0">Clean request</button>
+          <button class="chip" data-sample="1">Missing details</button>
+          <button class="chip" data-sample="2">Tries to trick the AI</button>
+        </div>
+        <div class="row end"><button id="draftBtn" class="primary">Draft with AI</button></div>
+        <div id="draftMsg" class="msg"></div>
+      </div>
+      <div class="card ph" id="ph"><h2>What you get</h2><p>A draft with one line per deliverable, a flag on any price the client never wrote, and questions where details are missing. You approve before anything goes to PayPal.</p><div class="mock"><div><b>Logo design</b><span>$450.00</span><em>found in source</em></div><div><b>Priority fee</b><span>$5,000.00</span><em class="w">not in source</em></div></div></div>
+      <div class="card" id="review" hidden>
+        <div class="row between"><h2>Review</h2><span id="srcBadge" class="badge">AI draft</span></div>
+        <div class="two">
+          <div><label>Client name</label><input id="cName"></div>
+          <div><label>Client email</label><input id="cEmail" type="email"></div>
+        </div>
+        <div class="two">
+          <div><label>Currency</label><select id="cur"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option></select></div>
+          <div><label>Payment terms</label><select id="terms"><option value="0">Due on receipt</option><option value="14">Net 14</option><option value="30">Net 30</option><option value="45">Net 45</option><option value="60">Net 60</option></select></div>
+        </div>
+        <div id="qs"></div>
+        <table id="lines"><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Line</th><th>Source check</th><th></th></tr></thead><tbody></tbody></table>
+        <button id="addLine" class="ghost">+ Add line</button>
+        <div class="total"><span>Total</span><b id="total">0.00</b></div>
+        <div id="gate" class="gate" hidden><label class="check"><input type="checkbox" id="ack"> I checked the highlighted prices myself.</label></div>
+        <div class="row end"><button id="sendBtn" class="primary">Create and send on PayPal</button></div>
+        <div id="sendMsg" class="msg"></div>
+        <div id="done" class="done" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="collect" class="panel">
+    <div class="hero small"><h1>Late payers, handled kindly.</h1>
+      <p>Invoices come straight from PayPal. Pick one, choose a tone, review the note, send the reminder through PayPal.</p></div>
+    <div class="grid2 wide">
+      <div class="card">
+        <div class="row between"><h2>Open and recent invoices</h2><button id="refresh" class="ghost">Refresh</button></div>
+        <div id="list" class="list"><div class="muted">Loading...</div></div>
+      </div>
+      <div class="card" id="chase" hidden>
+        <h2 id="chaseTitle">Reminder</h2>
+        <div id="chaseFacts" class="facts"></div>
+        <label>Tone</label>
+        <div class="seg" id="tone"><button data-t="friendly">Friendly</button><button data-t="neutral" class="on">Neutral</button><button data-t="firm">Firm</button></div>
+        <div class="row end"><button id="draftRem" class="primary">Write reminder</button></div>
+        <div id="remBox" hidden>
+          <label>Subject</label><input id="remSub">
+          <label>Message</label><textarea id="remNote" rows="6"></textarea>
+          <div id="remCheck" class="checked"></div>
+          <div class="row end"><button id="remSend" class="primary">Send reminder via PayPal</button></div>
+        </div>
+        <div id="chaseMsg" class="msg"></div>
+        <hr>
+        <div class="row"><button id="markPaid" class="ghost">Record as paid</button><button id="cancelInv" class="ghost danger">Cancel invoice</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" class="panel">
+    <div class="hero small"><h1>The model never owns the money.</h1></div>
+    <div class="cards3">
+      <div class="card"><h3>1. AI reads, humans approve</h3><p>The model turns messy text into lines. Nothing is sent until you review the draft. Missing details become questions, not guesses.</p></div>
+      <div class="card"><h3>2. Prices are checked against your text</h3><p>Each price must appear in what the client wrote. If it does not, the line is flagged and the send button stays locked until you confirm it.</p></div>
+      <div class="card"><h3>3. Reminders cannot invent amounts</h3><p>For collections, the invoice is re-read from PayPal. The only figure a reminder may contain is the amount due. Any other figure blocks the send, on the server.</p></div>
+      <div class="card"><h3>4. Pasted text is data</h3><p>Instructions hidden inside a client message are ignored. Try the third sample to see it.</p></div>
+      <div class="card"><h3>What runs where</h3><p>PayPal Invoicing API: create, send, list, remind, record payment, cancel. Gemini 2.5 Flash: draft and tone. Static page and serverless functions on Vercel. Source is open under MIT.</p></div>
+      <div class="card"><h3>Limits of this demo</h3><p>Sandbox only. Rate limited. One currency per invoice. No tax or discounts yet. Not financial or legal advice.</p></div>
+    </div>
+  </section>
+</main>
+<footer class="wrap foot">Dunly is a hackathon project. Built for the PayPal AI Hackathon. Not affiliated with PayPal.</footer>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+.env
+.gk
+node_modules
+.vercel
