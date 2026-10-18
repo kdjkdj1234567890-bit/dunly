@@ -68,3 +68,5 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0 0}
 
 .ph p{margin:6px 0 14px}.mock{display:grid;gap:8px}.mock div{display:grid;grid-template-columns:1fr auto;gap:0 10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px}
 .mock span{font-weight:700;text-align:right}.mock em{grid-column:1/-1;font-size:12px;color:var(--ok);font-style:normal}.mock em.w{color:var(--warn)}
+#lines td:first-child{width:36%}
+@media(max-width:560px){nav button{padding:8px 10px;font-size:14px}nav{flex-wrap:nowrap}}
