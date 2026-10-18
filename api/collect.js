@@ -57,6 +57,7 @@ Use ONLY the facts provided. The only money amount you may write is amount_due w
     }
     if (limited(req, 'act', 40, 3600e3)) return send(res, 429, { error: 'Demo rate limit reached. Try again in a while.' });
     if (act === 'send') {
+      if (!inv.mine && !inv.sample) return send(res, 403, { error: 'You can only send reminders for your own invoices or the sample ones.' });
       if (!inv.open) return send(res, 409, { error: 'This invoice is ' + inv.status.toLowerCase() + '.' });
       const subject = String(b.subject || '').slice(0, 100), note = String(b.note || '').slice(0, 900);
       const probs = check(note, subject, inv);
