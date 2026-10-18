@@ -55,4 +55,4 @@ tools/seed.js      fictional sandbox data
 
 ## Hackathon notes
 
-This project was created during the hackathon submission period. Its AI part uses Gemini (Google AI Studio free tier). Limits of the demo: sandbox only, shared (sample invoices are read-only, and a visitor can only mark paid or cancel invoices they created), rate limited per server instance, one currency per invoice, no tax or discount lines yet.
+This project was created during the hackathon submission period. Its AI part uses Gemini (Google AI Studio free tier). Limits of the demo: sandbox only, shared (sample invoices are read-only, and a visitor can only mark paid, cancel or send reminders on invoices they created, and samples can only get reminders). Ownership is a browser-session id for demo isolation, not real authentication; a production version would use real accounts, rate limited per server instance, one currency per invoice, no tax or discount lines yet.
